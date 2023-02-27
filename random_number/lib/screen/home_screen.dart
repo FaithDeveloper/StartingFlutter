@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:random_number/component/number_row.dart';
 import 'package:random_number/constant/color.dart';
 import 'package:random_number/screen/settings_screen.dart';
 
@@ -12,6 +13,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int maxNumber = 1000;
   List<int> ramdomNumers = [123, 456, 789];
 
   @override
@@ -24,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Header(),
+                _Header(onPressed: onSettingsPop),
                 _Body(
                   randomNumbers: ramdomNumers,
                 ),
@@ -35,12 +37,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  onRandomNumberGenerate () {
+  // 설정 화면에서 Pop 하였을 때 데이터 가져옴
+  void onSettingsPop () async { // async 로 미래의 데이터를 가져오도록 설정한다.
+    final result = await Navigator.of(context).push<int>(  // int 옵셔널러 return 을 해준다.
+        MaterialPageRoute(builder: (BuildContext context){
+          return SettingsScreen(maxNumber: maxNumber.toDouble(),);
+        })
+    );
+
+    if(result != null) {
+      setState(() {
+        maxNumber = result;
+      });
+    }
+  }
+
+  void onRandomNumberGenerate () {
     final rand = Random();
 
     final Set<int> nuwNumbers = {};
     while (nuwNumbers.length != 3) {
-      final number = rand.nextInt(1000);
+      final number = rand.nextInt(maxNumber);
       nuwNumbers.add(number);
     }
 
@@ -51,7 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({Key? key}) : super(key: key);
+  final VoidCallback onPressed;
+
+  const _Header({required this.onPressed, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +81,7 @@ class _Header extends StatelessWidget {
             color: Colors.white, fontSize: 30.0, fontWeight: FontWeight.w700),
       ),
       IconButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (BuildContext context){
-                return SettingsScreen();
-              })
-            );
-          },
+          onPressed: onPressed,
           icon: Icon(
             Icons.settings,
             color: RED_COLOR,
@@ -86,26 +99,16 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
         child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: randomNumbers
-          .asMap()
-          .entries
-          .map((x) => Padding(
-                padding: EdgeInsets.only(bottom: x.key == 2 ? 0 : 16.0),
-                child: Row(
-                  children: x.value
-                      .toString()
-                      .split('')
-                      .map((y) => Image.asset(
-                            'asset/img/$y.png',
-                            height: 70.0,
-                            width: 50.0,
-                          ))
-                      .toList(),
-                ),
-              ))
-          .toList(),
-    ));
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: randomNumbers
+              .asMap()
+              .entries
+              .map((x) => Padding(
+            padding: EdgeInsets.only(bottom: x.key == 2 ? 0 : 16.0),
+            child: NumberRow(number: x.value,),
+          ))
+              .toList(),
+        ));
   }
 }
 
